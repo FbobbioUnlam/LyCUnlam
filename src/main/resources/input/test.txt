@@ -1,0 +1,111 @@
+init {
+    a, b, d, z : Float
+    c1, c2, c3, x : Int
+    b, base, y : String
+}
+
+a := 99999.99
+a := 99.
+a := .9999
+b := "@sdADaSjfla%dfg"
+b := "asldk  fh sjf"
+c1 := 10
+c2 := 456
+c3 := 500
+
+x := 27 - c1
+x := c1 + 500
+x := 34 * 3
+d := c2 / c1
+
+write("ewr")
+write(b)
+read(base)
+
+if (c1 > c2)
+{
+    write("c1 es mas grande que c2")
+}
+
+if (c1 > c2)
+{
+    write("c1 es mas grande que c2")
+}
+else
+{
+    write("c1 es mas chico o igual a c2")
+}
+
+if (c1 > c2 AND c3 > c2)
+{
+    write("c1 es mas grande que c2 y c3 es mas grande que c2")
+}
+
+if (c1 > c2 OR c3 > c2)
+{
+    write("c1 es mas grande que c2 o c3 es mas grande que c2")
+}
+
+if (NOT c1 > c2)
+{
+    write("c1 no es mas grande que c2")
+}
+
+if (c1 > c2 AND c3 > c2)
+{
+    write("c1 es mas grande que c2 y c3 es mas grande que c2")
+}
+else
+{
+    write("c1 es mas chico o igual a c2")
+    write("o c3 es mas chico o igual a c2")
+}
+
+c1 := 1
+c2 := 3
+
+while (c1 > c2)
+{
+    write("c1 es mas grande que c2")
+    c1 := c1 + 1
+}
+
+y := sliceAndConcat(3, 6, "amarillo", "verde", 0)
+
+z := negativeCalculation(3.5, -2.0, a, b, -3.0)
+
+#+ Esto es un comentario, se ignora y no da error de sintáxis. +#
+
+#+ A continuacion la seccion con lineas que generan error de compilacion : +#
+#+ 1. Error de string, el literal no está cerrado correctamente. +#
+#+ b := "cadena sin cerrar +#
+
+#+ 2. Error, operación incompleta (falta operando derecho). +#
+#+ a := 10 - +#
+
+#+ 3. Error de sintaxis, falta cerrar el paréntesis. +#
+#+ if (a < b +#
+
+#+ 4. Error léxico, formato incorrecto para un flotante. +#
+#+ c := 10.2.4 +#
+
+#+ 5. Error de sintaxis, símbolo de asignación incorrecto +#
+#+ c = 5 +#
+
+#+ 6. Error de condición incompleta (falta el operando derecho). +#
+#+ if (a > ) +#
+#+ { +#
+#+    write("a es mas grande que b") +#
+#+ } +#
+
+#+ 7. Error, "write" solo permite cadenas o variables, no expresiones. +#
+#+ write(a + b) +#
+
+#+ 8. Error, falta el bloque {} para la sentencia del if. +#
+#+ if (a > b) write("Sin bloque") +#
+
+#+ 9. Error, if con doble condición +#
+#+ if (a > b > c) {write("Doble condición")} +#
+
+#+ 10. Constante entera fuera de rango +#
+#+ c := "Esto es un string que tiene que superar los cincuenta caracteres de largo." +#
