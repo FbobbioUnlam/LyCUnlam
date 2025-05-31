@@ -5,6 +5,7 @@ import lyc.compiler.factories.FileFactory;
 import lyc.compiler.factories.ParserFactory;
 import lyc.compiler.files.FileOutputWriter;
 import lyc.compiler.files.SymbolTableGenerator;
+import lyc.compiler.polaca.Polaca;
 import lyc.compiler.files.IntermediateCodeGenerator;
 import lyc.compiler.files.AsmCodeGenerator;
 
@@ -27,6 +28,9 @@ public final class Compiler {
             FileOutputWriter.writeOutput("symbol-table.txt", new SymbolTableGenerator());
             FileOutputWriter.writeOutput("intermediate-code.txt", new IntermediateCodeGenerator());
             FileOutputWriter.writeOutput("final.asm", new AsmCodeGenerator());
+
+            System.out.println("----- POLACA INVERSA GENERADA -----");
+            System.out.println(Polaca.getPolaca());
         } catch (IOException e) {
             System.err.println("\nHubo un error al intentar leer el archivo de entrada " + e.getMessage());
             System.exit(0);

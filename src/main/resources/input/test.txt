@@ -61,6 +61,20 @@ else
     write("o c3 es mas chico o igual a c2")
 }
 
+if (c1 > 0) {
+    if (c2 < 10) {
+        write("Dentro del segundo if")
+    } else {
+        write("Else del segundo if")
+    }
+} else {
+    if (c3 < 20) {
+        write("Dentro del if del else")
+    } else {
+        write("Else del if del else")
+    }
+}
+
 c1 := 1
 c2 := 3
 
@@ -107,5 +121,11 @@ z := negativeCalculation(3.5, -2.0, a, b, -3.0)
 #+ 9. Error, if con doble condición +#
 #+ if (a > b > c) {write("Doble condición")} +#
 
-#+ 10. Constante entera fuera de rango +#
+#+ 10. Error, constante string fuera de rango +#
 #+ c := "Esto es un string que tiene que superar los cincuenta caracteres de largo." +#
+
+#+ 11. Error, constante entera fuera de rango +#
+#+ a := 70535 +#
+
+#+ 11. Error, constante flotante fuera de rango +#
+#+ a := 340282360000000000000000000000000000000.0 +#

@@ -97,19 +97,32 @@ ESPACIO = {LineTerminator} | {Identation}
   /* Constants */
   {CTE_ENTERA} {
     try {
-        Short.parseShort(yytext());
-    } catch (NumberFormatException e) {
-        throw new InvalidIntegerException("Constante entera fuera del rango de 16 bits: " + yytext());
+      int valor = Integer.parseInt(yytext());
+      if (valor > 65535) {
+          throw new InvalidNumberException("Constante entera fuera del rango de 0 a 65535: " + yytext());
+      }
     }
-    SymbolTable.insert("_" + yytext(), "Int", yytext()); return symbol(ParserSym.CTE_ENTERA, yytext()); 
+    catch(NumberFormatException e) {
+      throw new InvalidNumberException("Constante entera fuera del rango de 0 a 65535: " + yytext());
+    }
+    SymbolTable.insert("_" + yytext(), "CTE_ENTERA", yytext()); 
+    return symbol(ParserSym.CTE_ENTERA, yytext()); 
   }
   {CTE_FLOTANTE} {
     try {
-        Float.parseFloat(yytext());
-    } catch (NumberFormatException e) {
-        throw new InvalidIntegerException("Constante flotante fuera del rango de 32 bits: " + yytext());
+      float valor = Float.parseFloat(yytext());
+      double min_pos = 1.4 * Math.pow(10, -45);
+      double max_pos = 3.4028235 * Math.pow(10, 38);
+
+      if ((valor != 0.0) && (Math.abs(valor) < min_pos || Math.abs(valor) > max_pos)) {
+        throw new InvalidNumberException("Constante flotante fuera del rango de -3.4028235*10^38 a 3.3.4028235*10^38: " + yytext());
+      }
+    } 
+    catch(NumberFormatException e) {
+      throw new InvalidNumberException("Constante flotante fuera del rango de -3.4028235*10^38 a 3.3.4028235*10^38: " + yytext());
     }
-    SymbolTable.insert("_" + yytext(), "Float", yytext()); 
+
+    SymbolTable.insert("_" + yytext(), "CTE_FLOTANTE", yytext()); 
     return symbol(ParserSym.CTE_FLOTANTE, yytext());
   }
   {CTE_CADENA} { 
@@ -117,7 +130,8 @@ ESPACIO = {LineTerminator} | {Identation}
     if (valor.length() > MAX_STRING_LENGTH) {
         throw new InvalidLengthException("Constante cadena excede los 50 caracteres: " + valor);
     }
-    SymbolTable.insert("_" + yytext(), "String", yytext()); return symbol(ParserSym.CTE_CADENA, yytext()); 
+    SymbolTable.insert("_" + yytext(), "CTE_CADENA", yytext()); 
+    return symbol(ParserSym.CTE_CADENA, yytext()); 
   }
 
   /* operators */

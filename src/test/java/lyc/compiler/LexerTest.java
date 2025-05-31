@@ -2,7 +2,7 @@ package lyc.compiler;
 
 import lyc.compiler.factories.LexerFactory;
 import lyc.compiler.model.CompilerException;
-import lyc.compiler.model.InvalidIntegerException;
+import lyc.compiler.model.InvalidNumberException;
 import lyc.compiler.model.InvalidLengthException;
 import lyc.compiler.model.UnknownCharacterException;
 import org.apache.commons.text.CharacterPredicates;
@@ -48,7 +48,7 @@ public class LexerTest {
 
   @Test
   public void invalidPositiveIntegerConstantValue() {
-    assertThrows(InvalidIntegerException.class, () -> {
+    assertThrows(InvalidNumberException.class, () -> {
       scan("%d".formatted(9223372036854775807L));
       nextToken();
     });
@@ -56,7 +56,7 @@ public class LexerTest {
 
   @Test
   public void invalidNegativeIntegerConstantValue() {
-    assertThrows(InvalidIntegerException.class, () -> {
+    assertThrows(InvalidNumberException.class, () -> {
       scan("%d".formatted(-9223372036854775807L));
       nextToken();
     });

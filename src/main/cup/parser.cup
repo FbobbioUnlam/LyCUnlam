@@ -4,11 +4,19 @@ import java_cup.runtime.*;
 
 class Parser;
 
+parser code {:
+    public static lyc.compiler.polaca.Polaca polaca = new lyc.compiler.polaca.Polaca();
+:};
+
 // Terminals
 terminal ID;
 terminal CTE_ENTERA;
 terminal CTE_FLOTANTE;
 terminal CTE_CADENA;
+
+//terminal String ID, CTE_CADENA;
+//terminal Integer CTE_ENTERA;
+//terminal Double CTE_FLOTANTE;
 
 terminal OP_SUMA;
 terminal OP_RESTA;
@@ -44,10 +52,11 @@ terminal NEGATIVE_CALCULATION;
 
 // Non Terminals
 non terminal programa, lista_sentencia, sentencia;
-non terminal asignacion, if, while, slice_and_concat, negative_calculation, declaracion, io;
+non terminal asignacion, while, slice_and_concat, negative_calculation, declaracion, io;
+non terminal if, if_sin_else, if_con_else, else_inicio; // if
 non terminal lista_declaraciones, declaracion_simple, lista_variables, tipo_variable;
 non terminal expresion, termino, factor, constante; // operaciones
-non terminal condicion, expresion_logica, operador_relacional; // if - while
+non terminal condicion, condicion_simple, condicion_multiple;
 non terminal lista_parametros_neg_calc, parametro_neg_calc; // negative_calculation
 non terminal lectura, escritura; // io
 
@@ -66,7 +75,9 @@ sentencia ::= declaracion
             | io;
 
 declaracion ::= INIT LLAVE_ABRIR lista_declaraciones LLAVE_CERRAR
-                {: System.out.println("Bloque de declaracion de variables"); :};
+                {: 
+                    System.out.println("Bloque de declaracion de variables"); 
+                :};
 
 lista_declaraciones ::= declaracion_simple
                       | lista_declaraciones declaracion_simple;
@@ -74,94 +85,364 @@ lista_declaraciones ::= declaracion_simple
 declaracion_simple ::= lista_variables OP_TIPO tipo_variable;
 
 lista_variables ::= lista_variables COMA ID:id
-                    {: System.out.println("Declaracion anidada (,) " + id); :}
+                    {: 
+                        System.out.println("Declaracion anidada (,) " + id); 
+                    :}
                 | ID:id
-                    {: System.out.println("Id: " + id); :};
+                    {: 
+                        System.out.println("Id: " + id); 
+                    :};
 
 tipo_variable ::= DT_FLOAT
-                    {: System.out.println("Declaracion Float"); :}
+                    {: 
+                        System.out.println("Declaracion Float"); 
+                    :}
                 | DT_INT
-                    {: System.out.println("Declaracion Int"); :}
+                    {: 
+                        System.out.println("Declaracion Int"); 
+                    :}
                 | DT_STRING
-                    {: System.out.println("Declaracion String"); :};
+                    {: 
+                        System.out.println("Declaracion String"); 
+                    :};
 
 asignacion ::= ID:id OP_ASIG expresion
-                {: System.out.println("Id: '" + id + "' Asignacion \n"); :}
+                {: 
+                    polaca.insertarEnPolaca(id);
+                    polaca.insertarEnPolaca(":=");
+                    System.out.println("Id: '" + id + "' Asignacion \n"); 
+                :}
             | ID:id OP_ASIG slice_and_concat
-                {: System.out.println("Id: '" + id + "' Asignacion \n"); :}
+                {: 
+                    polaca.insertarEnPolaca(id);
+                    polaca.insertarEnPolaca(":=");
+                    System.out.println("Id: '" + id + "' Asignacion \n"); 
+                :}
             | ID:id OP_ASIG negative_calculation
-                {: System.out.println("Id: '" + id + "' Asignacion \n"); :};
+                {: 
+                    polaca.insertarEnPolaca(id);
+                    polaca.insertarEnPolaca(":=");
+                    System.out.println("Id: '" + id + "' Asignacion \n"); 
+                :};
 
 expresion ::= expresion OP_SUMA termino
-              {: System.out.println("Suma"); :}
+              {: 
+                polaca.insertarEnPolaca("+");
+                System.out.println("Suma"); 
+              :}
             | expresion OP_RESTA termino
-                {: System.out.println("Resta"); :}
+                {: 
+                    polaca.insertarEnPolaca("-");
+                    System.out.println("Resta"); 
+                :}
             | termino
                 {: System.out.println("Expresion simple"); :};
 
 termino ::= termino OP_MULT factor
-             {: System.out.println("Multiplicacion"); :}
+             {: 
+                polaca.insertarEnPolaca("*");
+                System.out.println("Multiplicacion"); 
+            :}
             | termino OP_DIV factor
-                {: System.out.println("Division"); :}
+                {: 
+                    polaca.insertarEnPolaca("/");
+                    System.out.println("Division"); 
+                :}
             | factor
                 {: System.out.println("Termino simple"); :};
 
 factor ::= constante
             | ID:id
-                {: System.out.println("Id: " + id); :};
+                {: 
+                    polaca.insertarEnPolaca(id);
+                    System.out.println("Id: " + id); 
+                :};
 
 constante ::= CTE_ENTERA:entero
-                {: System.out.println("Cte entera: " + entero); :}
+                {: 
+                    polaca.insertarEnPolaca(entero);
+                    System.out.println("Cte entera: " + entero); 
+                :}
             | CTE_FLOTANTE:flotante
-                {: System.out.println("Cte flotante: " + flotante); :}
+                {: 
+                    polaca.insertarEnPolaca(flotante);
+                    System.out.println("Cte flotante: " + flotante); 
+                :}
             | CTE_CADENA:cadena
-                {: System.out.println("Cte cadena: " + cadena); :};
+                {: 
+                    polaca.insertarEnPolaca(cadena);
+                    System.out.println("Cte cadena: " + cadena); 
+                :};
 
 io ::= lectura
     | escritura;
 
 lectura ::= READ PAR_ABRIR ID:id PAR_CERRAR
-                {: System.out.println("Lectura de variable: " + id + "\n"); :};
+                {: 
+                    polaca.insertarEnPolaca(id);
+                    polaca.insertarEnPolaca("READ");
+                    System.out.println("Lectura de variable: " + id + "\n"); 
+                :};
 
 escritura ::= WRITE PAR_ABRIR CTE_CADENA:cadena PAR_CERRAR
-                {: System.out.println("Imprimir cadena: " + cadena); :}
+                {: 
+                    polaca.insertarEnPolaca(cadena);
+                    polaca.insertarEnPolaca("WRITE");
+                    System.out.println("Imprimir cadena: " + cadena); 
+                :}
             | WRITE PAR_ABRIR ID:id PAR_CERRAR
-                {: System.out.println("Imprimir variable: " + id); :};
+                {: 
+                    polaca.insertarEnPolaca(id);
+                    polaca.insertarEnPolaca("WRITE");
+                    System.out.println("Imprimir variable: " + id); 
+                :};
 
-if ::= IF PAR_ABRIR condicion PAR_CERRAR LLAVE_ABRIR lista_sentencia LLAVE_CERRAR
-        {: System.out.println("IF con bloque \n"); :}
-    | IF PAR_ABRIR condicion PAR_CERRAR LLAVE_ABRIR lista_sentencia LLAVE_CERRAR ELSE LLAVE_ABRIR lista_sentencia LLAVE_CERRAR
-        {: System.out.println("IF-ELSE con bloques \n"); :};
+if ::= if_con_else
+     | if_sin_else;
 
-while ::= WHILE PAR_ABRIR condicion PAR_CERRAR LLAVE_ABRIR lista_sentencia LLAVE_CERRAR
-            {: System.out.println("WHILE con condicion y bloque \n"); :};
+if_sin_else ::= IF PAR_ABRIR condicion PAR_CERRAR LLAVE_ABRIR lista_sentencia LLAVE_CERRAR
+                {: 
+                    if (!polaca.pilaIf.isEmpty()) {
+                        int posSalto = polaca.pilaIf.pop();
+                        //System.out.println("Voy a insertar en la pos: " + posSalto); 
+                        polaca.getElementos().set(posSalto, String.valueOf(polaca.getIndice()));
+                    }
 
-slice_and_concat ::= SLICE_AND_CONCAT PAR_ABRIR CTE_ENTERA:param1 COMA CTE_ENTERA:param2 COMA CTE_CADENA:param3 COMA CTE_CADENA:param4 COMA CTE_ENTERA:param5 PAR_CERRAR
-                        {: System.out.println("\nLlamado a sliceAndConcat " + param1 + ", " + param2 + ", " + param3 + ", " + param4 + ", " + param5); :};
+                    System.out.println("IF sin else \n"); 
+                :};
 
-negative_calculation ::= NEGATIVE_CALCULATION PAR_ABRIR lista_parametros_neg_calc PAR_CERRAR
-                            {: System.out.println("Llamado a negativeCalculation con params"); :};
+if_con_else ::= IF PAR_ABRIR condicion PAR_CERRAR LLAVE_ABRIR lista_sentencia LLAVE_CERRAR ELSE else_inicio LLAVE_ABRIR lista_sentencia LLAVE_CERRAR
+                {: 
+                    if (!polaca.pilaIf.isEmpty()) {
+                        int posSaltoFalso = polaca.pilaIf.pop();
+                        polaca.getElementos().set(posSaltoFalso, String.valueOf(polaca.getIndice()));
+                    }
+                :};
 
-lista_parametros_neg_calc ::= parametro_neg_calc
-                            | lista_parametros_neg_calc COMA parametro_neg_calc;
+else_inicio ::= 
+    {: 
+        polaca.insertarEnPolaca("BI");
+        if (!polaca.pilaIf.isEmpty()) {
+            int posSaltoFinal = polaca.pilaIf.pop();
+            polaca.getElementos().set(posSaltoFinal, String.valueOf(polaca.getIndice()+1));
+        }
+        polaca.pilaIf.push(polaca.getIndice());
+        polaca.insertarEnPolaca("SALTO");
+        System.out.println("IF con else \n"); 
+    :};
 
-parametro_neg_calc ::= ID:id
-                        {: System.out.println("Parametro variable: " + id); :}
-                     | CTE_FLOTANTE:valor
-                        {: System.out.println("Parametro constante: " + valor); :};
+while ::= WHILE PAR_ABRIR
+            {:
+                polaca.pilaWhile.push(polaca.getIndice());
+                polaca.insertarEnPolaca("ET");
+            :}
+          condicion PAR_CERRAR 
+          LLAVE_ABRIR lista_sentencia LLAVE_CERRAR
+            {: 
+                polaca.insertarEnPolaca("BI");
+                if (!polaca.pilaIf.isEmpty()) {
+                    int posSaltoFinal = polaca.pilaIf.pop();
+                    polaca.getElementos().set(posSaltoFinal, String.valueOf(polaca.getIndice()+1));
+                }
+                if (!polaca.pilaWhile.isEmpty()) {
+                    int posSaltoInicio = polaca.pilaWhile.pop();
+                    polaca.insertarEnPolaca(posSaltoInicio);
+                    System.out.println("Inserto la pos del inicio del while \n" + posSaltoInicio); 
+                }
+                System.out.println("WHILE con condicion y bloque \n"); 
+            :};
 
-condicion ::= expresion_logica
-            | NOT expresion_logica
-                {: System.out.println("Condicion con NOT"); :};
+condicion ::= condicion_simple
+                {: 
+                    System.out.println("Condicion simple"); 
+                :}
+            | condicion_multiple;
 
-expresion_logica ::= expresion operador_relacional expresion
-                        {: System.out.println("Condicion simple"); :}
-                  | expresion operador_relacional expresion AND expresion operador_relacional expresion
-                        {: System.out.println("Condicion con AND"); :}
-                  | expresion operador_relacional expresion OR expresion operador_relacional expresion
+condicion_simple ::= expresion COMP_MEN expresion
+                    {: 
+                        if (polaca.isOR) {
+                            polaca.getElementos().set(polaca.getIndice()-3, String.valueOf(polaca.getIndice()+3));                                
+                            int posSaltoFinal = polaca.pilaIf.pop();
+                            polaca.isOR = false;
+                        }
+                        polaca.insertarEnPolaca("CMP");
+                        polaca.insertarEnPolaca("BGE");                       
+                        System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                        polaca.pilaIf.push(polaca.getIndice());
+                        polaca.insertarEnPolaca("SALTO");
+                        System.out.println("Operador <"); 
+                    :}
+                    | expresion COMP_MAY expresion
+                    {: 
+                        polaca.insertarEnPolaca("CMP");
+                        polaca.insertarEnPolaca("BLE");
+                        System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                        polaca.pilaIf.push(polaca.getIndice());
+                        polaca.insertarEnPolaca("SALTO");
+                        System.out.println("Operador >"); 
+                    :}
+                    | NOT expresion COMP_MEN expresion
+                    {: 
+                        polaca.insertarEnPolaca("CMP");
+                        polaca.insertarEnPolaca("BLT");
+                        polaca.pilaIf.push(polaca.getIndice());
+                        polaca.insertarEnPolaca("SALTO");
+                        System.out.println("Operador NOT <"); 
+                    :}
+                    | NOT expresion COMP_MAY expresion
+                    {: 
+                        polaca.insertarEnPolaca("CMP");
+                        polaca.insertarEnPolaca("BGT");
+                        polaca.pilaIf.push(polaca.getIndice());
+                        polaca.insertarEnPolaca("SALTO");
+                        System.out.println("Operador NOT >"); 
+                    :};
+                        
+condicion_multiple ::= condicion_simple AND condicion_simple
+                        {: 
+                            System.out.println("Condicion con AND"); 
+                        :}
+                    | condicion_simple
+                        {: 
+                            polaca.isOR = true;
+                        :}
+                      OR condicion_simple
                         {: System.out.println("Condicion con OR"); :};
 
-operador_relacional ::= COMP_MEN
-                        {: System.out.println("Operador <"); :}
-                    | COMP_MAY
-                        {: System.out.println("Operador >"); :};
+slice_and_concat ::= SLICE_AND_CONCAT PAR_ABRIR CTE_ENTERA:param1 COMA CTE_ENTERA:param2 COMA CTE_CADENA:param3 COMA CTE_CADENA:param4 COMA CTE_ENTERA:param5 PAR_CERRAR
+                        {: 
+                            System.out.println("\nLlamado a sliceAndConcat " + param1 + ", " + param2 + ", " + param3 + ", " + param4 + ", " + param5); 
+                        :};
+
+negative_calculation ::= NEGATIVE_CALCULATION PAR_ABRIR lista_parametros_neg_calc PAR_CERRAR
+                            {: 
+                                int posSaltoFalso = 0;
+                                int posSaltoVerdadero = 0;
+
+                                //polaca.insertarEnPolaca("**************************************");
+                                // if contadorNegativos == 0 -> No hay negativos
+                                polaca.insertarEnPolaca("@cont");
+                                polaca.insertarEnPolaca("0");
+                                polaca.insertarEnPolaca("CMP");
+                                polaca.insertarEnPolaca("BNE");                       
+                                polaca.pilaNeg.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO");
+                                polaca.insertarEnPolaca("0.0");
+                                polaca.insertarEnPolaca("@res");
+                                polaca.insertarEnPolaca(":=");
+                                polaca.insertarEnPolaca("BI");
+                                polaca.pilaNegV.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO");
+
+                                posSaltoFalso = polaca.pilaNeg.pop();
+                                polaca.getElementos().set(posSaltoFalso, String.valueOf(polaca.getIndice()));
+
+                                // if contadorNegativos % 2 == 0 -> PAR
+                                polaca.insertarEnPolaca("@cont");
+                                polaca.insertarEnPolaca("2");
+                                polaca.insertarEnPolaca("%");
+                                polaca.insertarEnPolaca("0");
+                                polaca.insertarEnPolaca("CMP");
+                                polaca.insertarEnPolaca("BNE");                       
+                                polaca.pilaNeg.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO");
+                                polaca.insertarEnPolaca("@suma");
+                                polaca.insertarEnPolaca("@res");
+                                polaca.insertarEnPolaca(":=");
+                                polaca.insertarEnPolaca("BI");
+                                polaca.pilaNegV.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO");
+
+                                posSaltoFalso = polaca.pilaNeg.pop();
+                                polaca.getElementos().set(posSaltoFalso, String.valueOf(polaca.getIndice()));
+                                
+                                // IMPAR
+                                polaca.insertarEnPolaca("@prod");
+                                polaca.insertarEnPolaca("@res");
+                                polaca.insertarEnPolaca(":=");                        
+
+                                while (!polaca.pilaNegV.isEmpty()) {
+                                    posSaltoVerdadero = polaca.pilaNegV.pop();
+                                    polaca.getElementos().set(posSaltoVerdadero, String.valueOf(polaca.getIndice()));
+                                }
+                                polaca.insertarEnPolaca("@res");
+                                System.out.println("Llamado a negativeCalculation con params"); 
+                            :};
+
+lista_parametros_neg_calc ::= parametro_neg_calc
+                                {: 
+                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca(":=");
+
+                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca("0");
+                                    polaca.insertarEnPolaca("CMP");
+                                    polaca.insertarEnPolaca("BGE");                       
+                                    polaca.pilaNeg.push(polaca.getIndice());
+                                    polaca.insertarEnPolaca("SALTO");
+
+                                    polaca.insertarEnPolaca("@cont");
+                                    polaca.insertarEnPolaca("1");
+                                    polaca.insertarEnPolaca("+");
+                                    polaca.insertarEnPolaca("@cont");
+                                    polaca.insertarEnPolaca(":=");
+                                    
+                                    polaca.insertarEnPolaca("@suma");
+                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca("+");
+                                    polaca.insertarEnPolaca("@suma");
+                                    polaca.insertarEnPolaca(":=");
+
+                                    polaca.insertarEnPolaca("@prod");
+                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca("*");
+                                    polaca.insertarEnPolaca("@prod");
+                                    polaca.insertarEnPolaca(":=");
+
+                                    int posSalto = polaca.pilaNeg.pop();
+                                    polaca.getElementos().set(posSalto, String.valueOf(polaca.getIndice()));
+                                :}
+                            | lista_parametros_neg_calc COMA parametro_neg_calc
+                                {: 
+                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca(":=");
+
+                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca("0");
+                                    polaca.insertarEnPolaca("CMP");
+                                    polaca.insertarEnPolaca("BGE");                       
+                                    polaca.pilaNeg.push(polaca.getIndice());
+                                    polaca.insertarEnPolaca("SALTO");
+
+                                    polaca.insertarEnPolaca("@cont");
+                                    polaca.insertarEnPolaca("1");
+                                    polaca.insertarEnPolaca("+");
+                                    polaca.insertarEnPolaca("@cont");
+                                    polaca.insertarEnPolaca(":=");
+                                    
+                                    polaca.insertarEnPolaca("@suma");
+                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca("+");
+                                    polaca.insertarEnPolaca("@suma");
+                                    polaca.insertarEnPolaca(":=");
+
+                                    polaca.insertarEnPolaca("@prod");
+                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca("*");
+                                    polaca.insertarEnPolaca("@prod");
+                                    polaca.insertarEnPolaca(":=");
+
+                                    int posSalto = polaca.pilaNeg.pop();
+                                    polaca.getElementos().set(posSalto, String.valueOf(polaca.getIndice()));
+                                :};
+
+parametro_neg_calc ::= ID:id
+                        {: 
+                            polaca.insertarEnPolaca(id);
+                            System.out.println("Parametro variable: " + id); 
+                        :}
+                     | CTE_FLOTANTE:valor
+                        {: 
+                            polaca.insertarEnPolaca(valor);
+                            System.out.println("Parametro constante: " + valor); 
+                        :};                        
