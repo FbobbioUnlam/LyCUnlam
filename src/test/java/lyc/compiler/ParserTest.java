@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Disabled
 public class ParserTest {
-
+/*
     @Test
     public void assignmentWithExpression() throws Exception {
         compilationSuccessful("c=d*(e-21)/4");
@@ -96,6 +96,6 @@ public class ParserTest {
         assertThat(url).isNotNull();
         return IOUtils.toString(url.openStream(), StandardCharsets.UTF_8);
     }
-
+ */
 
 }

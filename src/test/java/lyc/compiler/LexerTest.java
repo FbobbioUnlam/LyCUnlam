@@ -20,13 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Disabled
 public class LexerTest {
-
+  /*
   private Lexer lexer;
-
 
   @Test
   public void comment() throws Exception{
-    scan("/*This is a comment*/");
+    scan("/This is a comment/");
     assertThat(nextToken()).isEqualTo(ParserSym.EOF);
   }
 
@@ -96,5 +95,5 @@ public class LexerTest {
             .withinRange('a', 'z')
             .build().generate(MAX_ID_LENGTH * 2);
   }
-
+ */
 }

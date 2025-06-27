@@ -1,11 +1,15 @@
 package lyc.compiler;
 
 import java_cup.runtime.*;
+import java.util.Stack;
 
 class Parser;
 
 parser code {:
     public static lyc.compiler.polaca.Polaca polaca = new lyc.compiler.polaca.Polaca();
+    public static lyc.compiler.symbols.SymbolTable st = new lyc.compiler.symbols.SymbolTable();
+    private Stack<Object> variables = new Stack<Object>();
+    private Stack<String> pilaTipos = new Stack<>();
 :};
 
 // Terminals
@@ -60,70 +64,94 @@ non terminal condicion, condicion_simple, condicion_multiple;
 non terminal lista_parametros_neg_calc, parametro_neg_calc; // negative_calculation
 non terminal lectura, escritura; // io
 
+non terminal verificar_declaracion;
+
 // Start Symbol Definition
 start with programa;
 
-programa ::= lista_sentencia;
+programa ::= declaracion
+            | declaracion lista_sentencia;
 
 lista_sentencia ::= lista_sentencia sentencia 
                     | sentencia;
 
-sentencia ::= declaracion
-            | asignacion
+sentencia ::= asignacion
             | if
             | while
             | io;
 
 declaracion ::= INIT LLAVE_ABRIR lista_declaraciones LLAVE_CERRAR
                 {: 
-                    System.out.println("Bloque de declaracion de variables"); 
+                    System.out.println("Bloque de declaracion de variables\n\n"); 
                 :};
 
 lista_declaraciones ::= declaracion_simple
                       | lista_declaraciones declaracion_simple;
 
-declaracion_simple ::= lista_variables OP_TIPO tipo_variable;
+declaracion_simple ::= lista_variables OP_TIPO tipo_variable
+                        {: 
+                            String tipo = pilaTipos.pop();
+                            for (int i = 0; i < variables.size(); i++) {
+                                st.declare(variables.get(i), tipo);
+                            }
+                            variables.clear(); 
+                        :};
 
 lista_variables ::= lista_variables COMA ID:id
                     {: 
-                        System.out.println("Declaracion anidada (,) " + id); 
+                        variables.push(id); 
+                        System.out.println("Declaracion anidada (,) " + id);
                     :}
                 | ID:id
                     {: 
-                        System.out.println("Id: " + id); 
+                        variables.push(id); 
+                        System.out.println("Id: " + id);
                     :};
 
 tipo_variable ::= DT_FLOAT
                     {: 
+                        pilaTipos.push("Float");
                         System.out.println("Declaracion Float"); 
                     :}
                 | DT_INT
                     {: 
+                        pilaTipos.push("Int");
                         System.out.println("Declaracion Int"); 
                     :}
                 | DT_STRING
                     {: 
+                        pilaTipos.push("String");
                         System.out.println("Declaracion String"); 
                     :};
 
-asignacion ::= ID:id OP_ASIG expresion
+asignacion ::= verificar_declaracion:id OP_ASIG expresion
+                {: 
+                    String auxTipoDestino = st.getType(id);
+                    /*                               
+                    for (int i = 0; i < pilaTipos.size(); i++) {
+                        System.out.println("Comparo el tipo izq: " + auxTipoDestino + ", con el tipo derecho: " + pilaTipos.pop());    
+                    }
+                    */
+                    st.checkAssignmentType(pilaTipos, auxTipoDestino, id);
+                    pilaTipos.clear();
+                    polaca.insertarEnPolaca(id);
+                    polaca.insertarEnPolaca(":=");
+                    System.out.println("Id: '" + id + "' Asignacion \n"); 
+                :}
+            | verificar_declaracion:id OP_ASIG slice_and_concat
                 {: 
                     polaca.insertarEnPolaca(id);
                     polaca.insertarEnPolaca(":=");
                     System.out.println("Id: '" + id + "' Asignacion \n"); 
                 :}
-            | ID:id OP_ASIG slice_and_concat
-                {: 
-                    polaca.insertarEnPolaca(id);
-                    polaca.insertarEnPolaca(":=");
-                    System.out.println("Id: '" + id + "' Asignacion \n"); 
-                :}
-            | ID:id OP_ASIG negative_calculation
+            | verificar_declaracion:id OP_ASIG negative_calculation
                 {: 
                     polaca.insertarEnPolaca(id);
                     polaca.insertarEnPolaca(":=");
                     System.out.println("Id: '" + id + "' Asignacion \n"); 
                 :};
+
+verificar_declaracion ::= ID:id {: st.checkDeclared(id); RESULT = id; :};
 
 expresion ::= expresion OP_SUMA termino
               {: 
@@ -154,22 +182,27 @@ termino ::= termino OP_MULT factor
 factor ::= constante
             | ID:id
                 {: 
+                    st.checkDeclared(id);
+                    pilaTipos.push(st.getType(id));
                     polaca.insertarEnPolaca(id);
                     System.out.println("Id: " + id); 
                 :};
 
 constante ::= CTE_ENTERA:entero
                 {: 
+                    pilaTipos.push("Int");
                     polaca.insertarEnPolaca(entero);
                     System.out.println("Cte entera: " + entero); 
                 :}
             | CTE_FLOTANTE:flotante
                 {: 
+                    pilaTipos.push("Float");
                     polaca.insertarEnPolaca(flotante);
                     System.out.println("Cte flotante: " + flotante); 
                 :}
             | CTE_CADENA:cadena
                 {: 
+                    pilaTipos.push("String");
                     polaca.insertarEnPolaca(cadena);
                     System.out.println("Cte cadena: " + cadena); 
                 :};
@@ -177,7 +210,7 @@ constante ::= CTE_ENTERA:entero
 io ::= lectura
     | escritura;
 
-lectura ::= READ PAR_ABRIR ID:id PAR_CERRAR
+lectura ::= READ PAR_ABRIR verificar_declaracion:id PAR_CERRAR
                 {: 
                     polaca.insertarEnPolaca(id);
                     polaca.insertarEnPolaca("READ");
@@ -190,7 +223,7 @@ escritura ::= WRITE PAR_ABRIR CTE_CADENA:cadena PAR_CERRAR
                     polaca.insertarEnPolaca("WRITE");
                     System.out.println("Imprimir cadena: " + cadena); 
                 :}
-            | WRITE PAR_ABRIR ID:id PAR_CERRAR
+            | WRITE PAR_ABRIR verificar_declaracion:id PAR_CERRAR
                 {: 
                     polaca.insertarEnPolaca(id);
                     polaca.insertarEnPolaca("WRITE");
@@ -202,7 +235,7 @@ if ::= if_con_else
 
 if_sin_else ::= IF PAR_ABRIR condicion PAR_CERRAR LLAVE_ABRIR lista_sentencia LLAVE_CERRAR
                 {: 
-                    if (!polaca.pilaIf.isEmpty()) {
+                    while (!polaca.pilaIf.isEmpty()) {
                         int posSalto = polaca.pilaIf.pop();
                         //System.out.println("Voy a insertar en la pos: " + posSalto); 
                         polaca.getElementos().set(posSalto, String.valueOf(polaca.getIndice()));
@@ -222,17 +255,18 @@ if_con_else ::= IF PAR_ABRIR condicion PAR_CERRAR LLAVE_ABRIR lista_sentencia LL
 else_inicio ::= 
     {: 
         polaca.insertarEnPolaca("BI");
-        if (!polaca.pilaIf.isEmpty()) {
+        while (!polaca.pilaIf.isEmpty()) {
             int posSaltoFinal = polaca.pilaIf.pop();
             polaca.getElementos().set(posSaltoFinal, String.valueOf(polaca.getIndice()+1));
         }
         polaca.pilaIf.push(polaca.getIndice());
-        polaca.insertarEnPolaca("SALTO");
+        polaca.insertarEnPolaca("SALTO"); // Avanzar
         System.out.println("IF con else \n"); 
     :};
 
 while ::= WHILE PAR_ABRIR
             {:
+                polaca.isWhile = true;
                 polaca.pilaWhile.push(polaca.getIndice());
                 polaca.insertarEnPolaca("ET");
             :}
@@ -240,14 +274,14 @@ while ::= WHILE PAR_ABRIR
           LLAVE_ABRIR lista_sentencia LLAVE_CERRAR
             {: 
                 polaca.insertarEnPolaca("BI");
-                if (!polaca.pilaIf.isEmpty()) {
-                    int posSaltoFinal = polaca.pilaIf.pop();
+                if (!polaca.pilaWhile.isEmpty()) {
+                    int posSaltoFinal = polaca.pilaWhile.pop();
                     polaca.getElementos().set(posSaltoFinal, String.valueOf(polaca.getIndice()+1));
                 }
                 if (!polaca.pilaWhile.isEmpty()) {
                     int posSaltoInicio = polaca.pilaWhile.pop();
                     polaca.insertarEnPolaca(posSaltoInicio);
-                    System.out.println("Inserto la pos del inicio del while \n" + posSaltoInicio); 
+                    //System.out.println("Inserto la pos del inicio del while: " + posSaltoInicio); 
                 }
                 System.out.println("WHILE con condicion y bloque \n"); 
             :};
@@ -260,41 +294,152 @@ condicion ::= condicion_simple
 
 condicion_simple ::= expresion COMP_MEN expresion
                     {: 
-                        if (polaca.isOR) {
-                            polaca.getElementos().set(polaca.getIndice()-3, String.valueOf(polaca.getIndice()+3));                                
-                            int posSaltoFinal = polaca.pilaIf.pop();
-                            polaca.isOR = false;
-                        }
+                        String tipo1 = pilaTipos.pop();
+                        String tipo2 = pilaTipos.pop();
+                        st.checkComparationType(tipo1, tipo2);
+                        pilaTipos.clear();
+                        //System.out.println("Condicion con 2 tipos: " + tipo1 + " y " + tipo2); 
+
                         polaca.insertarEnPolaca("CMP");
-                        polaca.insertarEnPolaca("BGE");                       
-                        System.out.println("Voy a apilar: " + polaca.getIndice()); 
-                        polaca.pilaIf.push(polaca.getIndice());
-                        polaca.insertarEnPolaca("SALTO");
+
+                        if (!polaca.isWhile) {
+                            if (polaca.isOR) {
+                                int posSaltoV = polaca.pilaIf.pop();
+                                polaca.insertarEnPolaca("BGE");
+                                //System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                                polaca.pilaIf.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO"); // Avanzar
+
+                                //Si es or modifico el primer comparador y salto al V del if
+                                polaca.getElementos().set(polaca.getIndice()-7, "BLT");   
+                                polaca.getElementos().set(polaca.getIndice()-6, String.valueOf(polaca.getIndice()));                              
+                                polaca.isOR = false;
+                            } else {
+                                polaca.insertarEnPolaca("BGE");        
+                                //System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                                polaca.pilaIf.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO"); // Avanzar
+                            }
+                        } else {
+                            polaca.insertarEnPolaca("BGE");        
+                            //System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                            polaca.pilaWhile.push(polaca.getIndice());
+                            polaca.insertarEnPolaca("SALTO"); // Avanzar
+                            polaca.isWhile = false;
+                        }
+
                         System.out.println("Operador <"); 
                     :}
                     | expresion COMP_MAY expresion
                     {: 
+                        String tipo1 = pilaTipos.pop();
+                        String tipo2 = pilaTipos.pop();
+                        st.checkComparationType(tipo1, tipo2);
+                        pilaTipos.clear();
+                        //System.out.println("Condicion con 2 tipos: " + tipo1 + " y " + tipo2); 
+
                         polaca.insertarEnPolaca("CMP");
-                        polaca.insertarEnPolaca("BLE");
-                        System.out.println("Voy a apilar: " + polaca.getIndice()); 
-                        polaca.pilaIf.push(polaca.getIndice());
-                        polaca.insertarEnPolaca("SALTO");
+
+                        if (!polaca.isWhile) {
+                            if (polaca.isOR) {
+                                int posSaltoV = polaca.pilaIf.pop();
+                                polaca.insertarEnPolaca("BLE");        
+                                //System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                                polaca.pilaIf.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO"); // Avanzar
+
+                                //Si es or modifico el primer comparador y salto al V del if
+                                polaca.getElementos().set(polaca.getIndice()-7, "BGT");   
+                                polaca.getElementos().set(polaca.getIndice()-6, String.valueOf(polaca.getIndice()));                              
+                                polaca.isOR = false;
+                            } else {
+                                polaca.insertarEnPolaca("BLE");
+                                //System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                                polaca.pilaIf.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO"); // Avanzar
+                            }
+                        } else {
+                            polaca.insertarEnPolaca("BLE");
+                            //System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                            polaca.pilaWhile.push(polaca.getIndice());
+                            polaca.insertarEnPolaca("SALTO"); // Avanzar
+                            polaca.isWhile = false;
+                        }
+
                         System.out.println("Operador >"); 
                     :}
                     | NOT expresion COMP_MEN expresion
                     {: 
+                        String tipo1 = pilaTipos.pop();
+                        String tipo2 = pilaTipos.pop();
+                        st.checkComparationType(tipo1, tipo2);
+                        pilaTipos.clear();
+                        //System.out.println("Condicion con 2 tipos: " + tipo1 + " y " + tipo2); 
+                        
                         polaca.insertarEnPolaca("CMP");
-                        polaca.insertarEnPolaca("BLT");
-                        polaca.pilaIf.push(polaca.getIndice());
-                        polaca.insertarEnPolaca("SALTO");
+
+                        if (!polaca.isWhile) {
+                            if (polaca.isOR) {
+                                int posSaltoV = polaca.pilaIf.pop();
+                                polaca.insertarEnPolaca("BLT");        
+                                //System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                                polaca.pilaIf.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO"); // Avanzar
+
+                                //Si es or modifico el primer comparador y salto al V del if
+                                polaca.getElementos().set(polaca.getIndice()-7, "BGE");   
+                                polaca.getElementos().set(polaca.getIndice()-6, String.valueOf(polaca.getIndice()));                              
+                                polaca.isOR = false;
+                            } else {
+                                polaca.insertarEnPolaca("BLT");
+                                polaca.pilaIf.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO"); // Avanzar
+                            }
+                        } else {
+                            polaca.insertarEnPolaca("BLT");
+                            //System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                            polaca.pilaWhile.push(polaca.getIndice());
+                            polaca.insertarEnPolaca("SALTO"); // Avanzar
+                            polaca.isWhile = false;
+                        }
+
                         System.out.println("Operador NOT <"); 
                     :}
                     | NOT expresion COMP_MAY expresion
                     {: 
+                        String tipo1 = pilaTipos.pop();
+                        String tipo2 = pilaTipos.pop();
+                        st.checkComparationType(tipo1, tipo2);
+                        pilaTipos.clear();
+                        //System.out.println("Condicion con 2 tipos: " + tipo1 + " y " + tipo2); 
+
                         polaca.insertarEnPolaca("CMP");
-                        polaca.insertarEnPolaca("BGT");
-                        polaca.pilaIf.push(polaca.getIndice());
-                        polaca.insertarEnPolaca("SALTO");
+
+                        if (!polaca.isWhile) {
+                            if (polaca.isOR) {
+                                int posSaltoV = polaca.pilaIf.pop();
+                                polaca.insertarEnPolaca("BGT");        
+                                //System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                                polaca.pilaIf.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO"); // Avanzar
+
+                                //Si es or modifico el primer comparador y salto al V del if
+                                polaca.getElementos().set(polaca.getIndice()-7, "BLE");   
+                                polaca.getElementos().set(polaca.getIndice()-6, String.valueOf(polaca.getIndice()));                              
+                                polaca.isOR = false;
+                            } else {
+                                polaca.insertarEnPolaca("BGT");
+                                polaca.pilaIf.push(polaca.getIndice());
+                                polaca.insertarEnPolaca("SALTO"); // Avanzar
+                            }
+                        } else {
+                            polaca.insertarEnPolaca("BGT");
+                            //System.out.println("Voy a apilar: " + polaca.getIndice()); 
+                            polaca.pilaWhile.push(polaca.getIndice());
+                            polaca.insertarEnPolaca("SALTO"); // Avanzar
+                            polaca.isWhile = false;
+                        }
+
                         System.out.println("Operador NOT >"); 
                     :};
                         
@@ -311,6 +456,15 @@ condicion_multiple ::= condicion_simple AND condicion_simple
 
 slice_and_concat ::= SLICE_AND_CONCAT PAR_ABRIR CTE_ENTERA:param1 COMA CTE_ENTERA:param2 COMA CTE_CADENA:param3 COMA CTE_CADENA:param4 COMA CTE_ENTERA:param5 PAR_CERRAR
                         {: 
+                            String resultado = polaca.sliceAndConcat(
+                                                        param1, 
+                                                        param2, 
+                                                        param3, 
+                                                        param4, 
+                                                        param5
+                                                );
+                            polaca.insertarEnPolaca(resultado);
+
                             System.out.println("\nLlamado a sliceAndConcat " + param1 + ", " + param2 + ", " + param3 + ", " + param4 + ", " + param5); 
                         :};
 
@@ -438,6 +592,8 @@ lista_parametros_neg_calc ::= parametro_neg_calc
 
 parametro_neg_calc ::= ID:id
                         {: 
+                            st.checkDeclared(id);
+                            st.checkParamType(id, "Float");
                             polaca.insertarEnPolaca(id);
                             System.out.println("Parametro variable: " + id); 
                         :}
