@@ -1,7 +1,41 @@
 init {
-    a, d, z : Float
+    a1, a2, a3, a4, a5, d, z : Float
     c1, c2, c3, x : Int
-    b, base, y : String
+    b1, base, y : String
 }
 
-z := negativeCalculation(3.5, -2.0, a, d, -3.0)
+a1 := 99999.99
+a2 := 99.
+a3 := .9999
+a4 := 1.999
+a5 := -5.2
+
+b1 := "@sdADaSjfla%dfg"
+c1 := 10
+c2 := 456
+c3 := 500
+
+x := c1 + 500
+write("Resultado de la suma: ")
+write(x)
+
+x := 27 - c1
+write("Resultado de la resta: ")
+write(x)
+
+x := 34 * 3
+write("Resultado de la multiplicacion: ")
+write(x)
+
+c1 := c2 / c1
+write("Resultado de la division: ")
+write(c1)
+
+if (c1 > c2)
+{
+    write("c1 es mas grande que c2")
+}
+else
+{
+    write("c1 es mas chico o igual a c2")
+}

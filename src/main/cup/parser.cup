@@ -268,7 +268,7 @@ while ::= WHILE PAR_ABRIR
             {:
                 polaca.isWhile = true;
                 polaca.pilaWhile.push(polaca.getIndice());
-                polaca.insertarEnPolaca("ET");
+                polaca.insertarEnPolaca("WHILE");
             :}
           condicion PAR_CERRAR 
           LLAVE_ABRIR lista_sentencia LLAVE_CERRAR

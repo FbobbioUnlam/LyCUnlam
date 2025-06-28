@@ -6,7 +6,7 @@ import java.util.Stack;
 import lyc.compiler.model.MyCompilerException;
 
 public class SymbolTable {
-    private static final HashMap<String, SymbolEntry> table = new HashMap<>();
+    public static final HashMap<String, SymbolEntry> table = new HashMap<>();
 
     public static void insert(String nombre, String tipoDato, String valor) {
         if (!table.containsKey(nombre)) {
