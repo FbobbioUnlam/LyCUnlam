@@ -6,6 +6,9 @@ import lyc.compiler.symbols.SymbolTable;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.List;
+import java.util.Queue;
 import java.util.Stack;
 
 public class AsmCodeGenerator implements FileGenerator {
@@ -64,7 +67,13 @@ public class AsmCodeGenerator implements FileGenerator {
         fileWriter.write("MOV ES, AX\n\n");
 
         Stack<String> pila = new Stack<>();
-        for (String token : Polaca.getElementos()) {
+        Stack<Integer> pilaJmp = new Stack<>();
+        Queue<Integer> colaJmp = new ArrayDeque<>();
+        List<String> elementos = Polaca.getElementos();
+        
+        for (int i = 0; i < elementos.size(); i++) {
+            String token = elementos.get(i);
+
             switch (token) {
                 case ":=":
                     String var = pila.pop();
@@ -149,17 +158,60 @@ public class AsmCodeGenerator implements FileGenerator {
                     }
                     break;
 
+                case "CMP":
+                    String rightCMP = pila.pop();
+                    String leftCMP = pila.pop();
+                    String rightNorm = adaptLiteral(rightCMP);
+                    String leftNorm = adaptLiteral(leftCMP);
+                    fileWriter.write(String.format("; %s CMP %s\n", leftCMP, rightCMP));
+                    fileWriter.write(String.format("fld %s\n", leftNorm));
+                    fileWriter.write(String.format("fld %s\n", rightNorm));
+                    fileWriter.write(String.format("fxch\n"));
+                    fileWriter.write("fcomp\n");
+                    fileWriter.write("fstsw ax\n");
+                    fileWriter.write("ffree st(0)\n");
+                    fileWriter.write("sahf\n");
+                    break;
 
-                    /* 
-                    fileWriter.write(String.format("; %s (%s) \n", token, varWNorm));
-                    fileWriter.write(String.format("mov dx,OFFSET %s\n", varWNorm));
-                    fileWriter.write(String.format("mov ah,9\n"));
-                    fileWriter.write(String.format("int 21h\n"));
-                    fileWriter.write("newline 1\n\n");
-                    break;*/
+                case "BLE":
+                case "BGE":
+                case "BEQ":
+                case "BNE":
+                case "BGT":
+                case "BLT":
+                    // Obtengo el lugar a saltar
+                    Integer posJumpFalse = Integer.parseInt(elementos.get(i+1));
+                    //System.err.println("Voy a pushear la primera pos a saltar " + posJumpFalse);
+                    //pilaJmp.push(posJumpFalse);
+                    colaJmp.add(posJumpFalse);
+                    String jmp = switch (token) {
+                        case "BLE" -> "jbe";
+                        case "BGE" -> "jae";
+                        case "BEQ" -> "je";
+                        case "BNE" -> "jne";
+                        case "BGT" -> "ja";
+                        case "BLT" -> "jb";
+                        default -> throw new RuntimeException("Comparación no soportada: " + token);
+                    };
+                    fileWriter.write(String.format("%s etiq_%s\n", jmp, posJumpFalse));
+                    break;
+
+                case "BI":
+                    // Obtengo el lugar a saltar
+                    Integer posJumpBI = Integer.parseInt(elementos.get(i+1));
+                    //pilaJmp.push(posJumpBI);
+                    colaJmp.add(posJumpBI);
+                    fileWriter.write(String.format("; Salto incondicional\n"));
+                    fileWriter.write(String.format("jmp etiq_%s\n", posJumpBI));
+                    break;
+
                 default:
                     pila.push(token);
                     break;
+            }
+
+            if(!colaJmp.isEmpty() && i+1 == colaJmp.peek()) {
+                fileWriter.write(String.format("etiq_%d:\n", colaJmp.remove()));
             }
         }
 

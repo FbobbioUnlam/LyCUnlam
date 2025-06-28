@@ -31,6 +31,7 @@ c1 := c2 / c1
 write("Resultado de la division: ")
 write(c1)
 
+write(c2)
 if (c1 > c2)
 {
     write("c1 es mas grande que c2")
