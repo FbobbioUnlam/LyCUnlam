@@ -40,3 +40,61 @@ else
 {
     write("c1 es mas chico o igual a c2")
 }
+
+c1 := 1
+c2 := 3
+
+while (c2 > c1)
+{
+    write("c1 es mas chico que c2")
+    c1 := c1 + 1
+    write("")
+}
+
+if (NOT c1 < c2)
+{
+    write("c1 y c2 son iguales")
+}
+
+
+#+ Esto es un comentario, se ignora y no da error de sintáxis. +#
+
+#+ A continuacion la seccion con lineas que generan error de compilacion : +#
+#+ 1. Error de string, el literal no está cerrado correctamente. +#
+#+ b := "cadena sin cerrar +#
+
+#+ 2. Error, operación incompleta (falta operando derecho). +#
+#+ a := 10 - +#
+
+#+ 3. Error de sintaxis, falta cerrar el paréntesis. +#
+#+ if (a < b +#
+
+#+ 4. Error léxico, formato incorrecto para un flotante. +#
+#+ c := 10.2.4 +#
+
+#+ 5. Error de sintaxis, símbolo de asignación incorrecto +#
+#+ c = 5 +#
+
+#+ 6. Error de condición incompleta (falta el operando derecho). +#
+#+ if (a > ) +#
+#+ { +#
+#+    write("a es mas grande que b") +#
+#+ } +#
+
+#+ 7. Error, "write" solo permite cadenas o variables, no expresiones. +#
+#+ write(a + b) +#
+
+#+ 8. Error, falta el bloque {} para la sentencia del if. +#
+#+ if (a > b) write("Sin bloque") +#
+
+#+ 9. Error, if con doble condición +#
+#+ if (a > b > c) {write("Doble condición")} +#
+
+#+ 10. Error, constante string fuera de rango +#
+#+ c := "Esto es un string que tiene que superar los cincuenta caracteres de largo." +#
+
+#+ 11. Error, constante entera fuera de rango +#
+#+ a := 70535 +#
+
+#+ 11. Error, constante flotante fuera de rango +#
+#+ a := 340282360000000000000000000000000000000.0 +#

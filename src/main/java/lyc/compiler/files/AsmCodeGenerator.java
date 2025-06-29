@@ -67,12 +67,13 @@ public class AsmCodeGenerator implements FileGenerator {
         fileWriter.write("MOV ES, AX\n\n");
 
         Stack<String> pila = new Stack<>();
-        Stack<Integer> pilaJmp = new Stack<>();
         Queue<Integer> colaJmp = new ArrayDeque<>();
         List<String> elementos = Polaca.getElementos();
-        
+        String token;
+        Boolean isWhile = false;
+
         for (int i = 0; i < elementos.size(); i++) {
-            String token = elementos.get(i);
+            token = elementos.get(i);
 
             switch (token) {
                 case ":=":
@@ -182,7 +183,6 @@ public class AsmCodeGenerator implements FileGenerator {
                     // Obtengo el lugar a saltar
                     Integer posJumpFalse = Integer.parseInt(elementos.get(i+1));
                     //System.err.println("Voy a pushear la primera pos a saltar " + posJumpFalse);
-                    //pilaJmp.push(posJumpFalse);
                     colaJmp.add(posJumpFalse);
                     String jmp = switch (token) {
                         case "BLE" -> "jbe";
@@ -199,10 +199,18 @@ public class AsmCodeGenerator implements FileGenerator {
                 case "BI":
                     // Obtengo el lugar a saltar
                     Integer posJumpBI = Integer.parseInt(elementos.get(i+1));
-                    //pilaJmp.push(posJumpBI);
-                    colaJmp.add(posJumpBI);
+                    if (!isWhile) {
+                        colaJmp.add(posJumpBI);
+                    } else {
+                        isWhile = false;
+                    }
                     fileWriter.write(String.format("; Salto incondicional\n"));
                     fileWriter.write(String.format("jmp etiq_%s\n", posJumpBI));
+                    break;
+                case "WHILE":
+                    fileWriter.write(String.format("etiq_%d:\n", i));
+                    fileWriter.write(String.format("; While\n"));
+                    isWhile = true;
                     break;
 
                 default:
