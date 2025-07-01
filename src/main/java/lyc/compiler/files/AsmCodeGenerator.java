@@ -56,6 +56,7 @@ public class AsmCodeGenerator implements FileGenerator {
             }
         }
 
+        fileWriter.write("@numero_entero dw ?\n");
         fileWriter.write("@aux dd ?\n");
         fileWriter.write("@aux2 dd ?\n");
 
@@ -103,8 +104,6 @@ public class AsmCodeGenerator implements FileGenerator {
                         String valNorm = adaptLiteral(val);
 
                         fileWriter.write(String.format("fld %s\n", valNorm));
-                        //fileWriter.write("fstp @aux\n");
-                        //fileWriter.write("fld @aux\n");
                         fileWriter.write(String.format("fstp %s\n\n", var));
                     }
                     break;
@@ -113,6 +112,7 @@ public class AsmCodeGenerator implements FileGenerator {
                 case "-":
                 case "*":
                 case "/":
+                case "%":
                     String op2 = pila.pop();
                     String op1 = pila.pop();
                     String op1Norm = adaptLiteral(op1);
@@ -151,10 +151,39 @@ public class AsmCodeGenerator implements FileGenerator {
                             fileWriter.write("newLine 1\n\n");
                             break;
 
+                        case "Int":
+                        case "CTE_ENTERA":
+                            fileWriter.write(String.format("fld %s\n", varWNorm));
+                            fileWriter.write(String.format("DisplayFloat %s, 2\n", varWNorm));
+                            fileWriter.write("newLine 2\n\n");
+                            break;    
+
                         default:
                             fileWriter.write(String.format("fld %s\n", varWNorm));
                             fileWriter.write(String.format("DisplayFloat %s, 2\n", varWNorm));
                             fileWriter.write("newLine 2\n\n");
+                            break;
+                    }
+                    break;
+
+                case("READ"):
+                    String varR = pila.pop();
+                    SymbolEntry entryR = SymbolTable.table.get(varR);
+                    String varRNorm = adaptLiteral(varR);
+
+                    fileWriter.write(String.format("; READ (%s)\n", varR));
+
+                    switch (entryR.tipoDato) {
+                        case "String":
+                            fileWriter.write(String.format("getString %s\n\n", varRNorm));
+                            break;
+
+                        case "Int":
+                            fileWriter.write(String.format("GetFloat %s\n\n", varRNorm));
+                            break; 
+                              
+                        default:
+                            fileWriter.write(String.format("GetFloat %s\n\n", varRNorm));
                             break;
                     }
                     break;
@@ -196,17 +225,40 @@ public class AsmCodeGenerator implements FileGenerator {
                     fileWriter.write(String.format("%s etiq_%s\n", jmp, posJumpFalse));
                     break;
 
+                case "JZ":
+                    // Obtengo el lugar a saltar
+                    String opJz = pila.pop();
+                    String opJzNorm = adaptLiteral(opJz);
+                    Integer fposJumpFalse = Integer.parseInt(elementos.get(i+1));
+                    colaJmp.add(fposJumpFalse);
+
+                    fileWriter.write(String.format("; %s %s\n", opJz, token));
+                    fileWriter.write(String.format("fld %s\n", opJzNorm));
+                    fileWriter.write(String.format("fistp @numero_entero\n"));
+                    fileWriter.write(String.format("mov ax, @numero_entero\n"));
+                    fileWriter.write(String.format("and ax, 1\n"));
+                    fileWriter.write(String.format("%s etiq_%s\n", "jz", fposJumpFalse));
+                    break;   
+
                 case "BI":
                     // Obtengo el lugar a saltar
                     Integer posJumpBI = Integer.parseInt(elementos.get(i+1));
                     if (!isWhile) {
-                        colaJmp.add(posJumpBI);
+                        if (!colaJmp.contains(posJumpBI)) { 
+                            colaJmp.add(posJumpBI);
+                        }
                     } else {
                         isWhile = false;
                     }
                     fileWriter.write(String.format("; Salto incondicional\n"));
                     fileWriter.write(String.format("jmp etiq_%s\n", posJumpBI));
                     break;
+
+                case "BIFIN":
+                    fileWriter.write(String.format("; Salto incondicional\n"));
+                    fileWriter.write(String.format("jmp etiq_%s\n", Integer.parseInt(elementos.get(i+1))));
+                    break;
+
                 case "WHILE":
                     fileWriter.write(String.format("etiq_%d:\n", i));
                     fileWriter.write(String.format("; While\n"));
@@ -218,7 +270,13 @@ public class AsmCodeGenerator implements FileGenerator {
                     break;
             }
 
-            if(!colaJmp.isEmpty() && i+1 == colaJmp.peek()) {
+            /* 
+            if (!colaJmp.isEmpty()) {
+                System.err.println("pos: " + i + " - " + "primer elemento en cola: " + colaJmp.peek());
+            }
+            */
+            
+            while(!colaJmp.isEmpty() && i+1 == colaJmp.peek()) {
                 fileWriter.write(String.format("etiq_%d:\n", colaJmp.remove()));
             }
         }
@@ -251,7 +309,9 @@ public class AsmCodeGenerator implements FileGenerator {
     }
 
     private String normalizeStringName(String valor) {
-        return "_" + valor.replace("\"", "").replace(" ", "_").replace(":","");
+        String cleaned = valor.replace("\"", "").replace(" ", "_");
+        cleaned = cleaned.replaceAll("[^a-zA-Z0-9_]", "");
+        return "_" + cleaned;
     }
 
     private String adaptLiteral(String token) {

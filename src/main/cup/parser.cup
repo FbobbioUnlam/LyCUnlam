@@ -10,6 +10,7 @@ parser code {:
     public static lyc.compiler.symbols.SymbolTable st = new lyc.compiler.symbols.SymbolTable();
     private Stack<Object> variables = new Stack<Object>();
     private Stack<String> pilaTipos = new Stack<>();
+    private Object auxParam;
 :};
 
 // Terminals
@@ -464,7 +465,8 @@ slice_and_concat ::= SLICE_AND_CONCAT PAR_ABRIR CTE_ENTERA:param1 COMA CTE_ENTER
                                                         param5
                                                 );
                             polaca.insertarEnPolaca(resultado);
-
+                            st.insert("_resSliceAndConcat", "CTE_CADENA", resultado);
+                            
                             System.out.println("\nLlamado a sliceAndConcat " + param1 + ", " + param2 + ", " + param3 + ", " + param4 + ", " + param5); 
                         :};
 
@@ -476,33 +478,30 @@ negative_calculation ::= NEGATIVE_CALCULATION PAR_ABRIR lista_parametros_neg_cal
                                 //polaca.insertarEnPolaca("**************************************");
                                 // if contadorNegativos == 0 -> No hay negativos
                                 polaca.insertarEnPolaca("@cont");
-                                polaca.insertarEnPolaca("0");
+                                polaca.insertarEnPolaca("0.0");
                                 polaca.insertarEnPolaca("CMP");
                                 polaca.insertarEnPolaca("BNE");                       
                                 polaca.pilaNeg.push(polaca.getIndice());
                                 polaca.insertarEnPolaca("SALTO");
                                 polaca.insertarEnPolaca("0.0");
-                                polaca.insertarEnPolaca("@res");
+                                polaca.insertarEnPolaca("@ngres");
                                 polaca.insertarEnPolaca(":=");
-                                polaca.insertarEnPolaca("BI");
+                                polaca.insertarEnPolaca("BIFIN");
                                 polaca.pilaNegV.push(polaca.getIndice());
                                 polaca.insertarEnPolaca("SALTO");
 
                                 posSaltoFalso = polaca.pilaNeg.pop();
                                 polaca.getElementos().set(posSaltoFalso, String.valueOf(polaca.getIndice()));
 
-                                // if contadorNegativos % 2 == 0 -> PAR
+                                // if contadorNegativos IMPAR
                                 polaca.insertarEnPolaca("@cont");
-                                polaca.insertarEnPolaca("2");
-                                polaca.insertarEnPolaca("%");
-                                polaca.insertarEnPolaca("0");
-                                polaca.insertarEnPolaca("CMP");
-                                polaca.insertarEnPolaca("BNE");                       
+                                polaca.insertarEnPolaca("JZ");                       
                                 polaca.pilaNeg.push(polaca.getIndice());
                                 polaca.insertarEnPolaca("SALTO");
-                                polaca.insertarEnPolaca("@suma");
-                                polaca.insertarEnPolaca("@res");
+                                polaca.insertarEnPolaca("@prod");
+                                polaca.insertarEnPolaca("@ngres");
                                 polaca.insertarEnPolaca(":=");
+
                                 polaca.insertarEnPolaca("BI");
                                 polaca.pilaNegV.push(polaca.getIndice());
                                 polaca.insertarEnPolaca("SALTO");
@@ -510,45 +509,64 @@ negative_calculation ::= NEGATIVE_CALCULATION PAR_ABRIR lista_parametros_neg_cal
                                 posSaltoFalso = polaca.pilaNeg.pop();
                                 polaca.getElementos().set(posSaltoFalso, String.valueOf(polaca.getIndice()));
                                 
-                                // IMPAR
-                                polaca.insertarEnPolaca("@prod");
-                                polaca.insertarEnPolaca("@res");
-                                polaca.insertarEnPolaca(":=");                        
+                                // PAR
+                                polaca.insertarEnPolaca("@suma");
+                                polaca.insertarEnPolaca("@ngres");
+                                polaca.insertarEnPolaca(":=");                      
 
                                 while (!polaca.pilaNegV.isEmpty()) {
                                     posSaltoVerdadero = polaca.pilaNegV.pop();
                                     polaca.getElementos().set(posSaltoVerdadero, String.valueOf(polaca.getIndice()));
                                 }
-                                polaca.insertarEnPolaca("@res");
+                                polaca.insertarEnPolaca("@ngres");
+
+                                st.insert("@cont", "Float", "");
+                                st.insert("@suma", "Float", "");
+                                st.insert("@prod", "Float", "");
+                                st.insert("@ngresto", "Float", "");
+                                st.insert("@ngres", "Float", "");
+                                st.insert("_0.0", "CTE_FLOTANTE", "0.0");
+                                st.insert("_1.0", "CTE_FLOTANTE", "1.0");
+                                st.insert("_2.0", "CTE_FLOTANTE", "2.0");
                                 System.out.println("Llamado a negativeCalculation con params"); 
                             :};
 
 lista_parametros_neg_calc ::= parametro_neg_calc
                                 {: 
-                                    polaca.insertarEnPolaca("@aux");
-                                    polaca.insertarEnPolaca(":=");
+                                    // Inicializo la suma, el producto y contador
+                                    polaca.insertarEnPolaca("0.0");
+                                    polaca.insertarEnPolaca("@cont");
+                                    polaca.insertarEnPolaca(":=");   
 
-                                    polaca.insertarEnPolaca("@aux");
-                                    polaca.insertarEnPolaca("0");
+                                    polaca.insertarEnPolaca("0.0");
+                                    polaca.insertarEnPolaca("@suma");
+                                    polaca.insertarEnPolaca(":=");   
+
+                                    polaca.insertarEnPolaca("1.0");
+                                    polaca.insertarEnPolaca("@prod");
+                                    polaca.insertarEnPolaca(":=");   
+
+                                    // Evaluo el primer valor de la lista
+                                    polaca.insertarEnPolaca("0.0");
                                     polaca.insertarEnPolaca("CMP");
                                     polaca.insertarEnPolaca("BGE");                       
                                     polaca.pilaNeg.push(polaca.getIndice());
                                     polaca.insertarEnPolaca("SALTO");
 
                                     polaca.insertarEnPolaca("@cont");
-                                    polaca.insertarEnPolaca("1");
+                                    polaca.insertarEnPolaca("1.0");
                                     polaca.insertarEnPolaca("+");
                                     polaca.insertarEnPolaca("@cont");
                                     polaca.insertarEnPolaca(":=");
                                     
                                     polaca.insertarEnPolaca("@suma");
-                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca(auxParam);
                                     polaca.insertarEnPolaca("+");
                                     polaca.insertarEnPolaca("@suma");
                                     polaca.insertarEnPolaca(":=");
 
                                     polaca.insertarEnPolaca("@prod");
-                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca(auxParam);
                                     polaca.insertarEnPolaca("*");
                                     polaca.insertarEnPolaca("@prod");
                                     polaca.insertarEnPolaca(":=");
@@ -558,30 +576,26 @@ lista_parametros_neg_calc ::= parametro_neg_calc
                                 :}
                             | lista_parametros_neg_calc COMA parametro_neg_calc
                                 {: 
-                                    polaca.insertarEnPolaca("@aux");
-                                    polaca.insertarEnPolaca(":=");
-
-                                    polaca.insertarEnPolaca("@aux");
-                                    polaca.insertarEnPolaca("0");
+                                    polaca.insertarEnPolaca("0.0");
                                     polaca.insertarEnPolaca("CMP");
                                     polaca.insertarEnPolaca("BGE");                       
                                     polaca.pilaNeg.push(polaca.getIndice());
                                     polaca.insertarEnPolaca("SALTO");
 
                                     polaca.insertarEnPolaca("@cont");
-                                    polaca.insertarEnPolaca("1");
+                                    polaca.insertarEnPolaca("1.0");
                                     polaca.insertarEnPolaca("+");
                                     polaca.insertarEnPolaca("@cont");
                                     polaca.insertarEnPolaca(":=");
                                     
                                     polaca.insertarEnPolaca("@suma");
-                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca(auxParam);
                                     polaca.insertarEnPolaca("+");
                                     polaca.insertarEnPolaca("@suma");
                                     polaca.insertarEnPolaca(":=");
 
                                     polaca.insertarEnPolaca("@prod");
-                                    polaca.insertarEnPolaca("@aux");
+                                    polaca.insertarEnPolaca(auxParam);
                                     polaca.insertarEnPolaca("*");
                                     polaca.insertarEnPolaca("@prod");
                                     polaca.insertarEnPolaca(":=");
@@ -595,10 +609,12 @@ parametro_neg_calc ::= ID:id
                             st.checkDeclared(id);
                             st.checkParamType(id, "Float");
                             polaca.insertarEnPolaca(id);
+                            auxParam = id;
                             System.out.println("Parametro variable: " + id); 
                         :}
                      | CTE_FLOTANTE:valor
                         {: 
                             polaca.insertarEnPolaca(valor);
+                            auxParam = valor;
                             System.out.println("Parametro constante: " + valor); 
                         :};                        

@@ -1,48 +1,142 @@
 init {
-    a1, a2, a3, a4, a5, d, z : Float
-    c1, c2, c3, x : Int
-    b1, base, y : String
+    a1, a2, a3, a4, a5, z : Float
+    c1, c2, c3, x, continuar : Int
+    b1, y : String
 }
 
+write("")
+write("IMPORTANTE: Los mensajes son a modo de debug.")
+write("")
+
+write("*** Asignacion de variables ***")
+
 a1 := 99999.99
+write("Variable float asignada con 99999.99")
+write(a1)
+
 a2 := 99.
+write("Variable float asignada con 99.")
+write(a2)
+
 a3 := .9999
+write("Variable float asignada con .9999")
+write(a3)
+
 a4 := 1.999
+write("Variable float asignada con 1.999")
+write(a4)
+
 a5 := -5.2
+write("Variable float asignada con -5.2")
+write(a5)
+
+#+**********************************************************************************+#
+write("Enter para continuar.")
+read(continuar)
 
 b1 := "@sdADaSjfla%dfg"
-c1 := 10
-c2 := 456
-c3 := 500
+write("Variable string asignada con -@sdADaSjfla%dfg-")
+write(b1)
+write("")
 
+c1 := 10
+write("Variable int asignada con 10")
+write(c1)
+
+c2 := 456
+write("Variable int asignada con 456")
+write(c2)
+
+c3 := 500
+write("Variable int asignada con 500")
+write(c3)
+
+#+**********************************************************************************+#
+write("Enter para continuar.")
+read(continuar)
+
+write("*** Operaciones arimeticas ***")
+
+#+ 510 = 10 + 500 +#
 x := c1 + 500
 write("Resultado de la suma: ")
 write(x)
 
+#+ 17 = 27 + 10 +#
 x := 27 - c1
 write("Resultado de la resta: ")
 write(x)
 
+#+ 102 = 34 * 3 +#
 x := 34 * 3
 write("Resultado de la multiplicacion: ")
 write(x)
 
+#+ 45.6 = 456 / 10 +#
 c1 := c2 / c1
 write("Resultado de la division: ")
 write(c1)
 
+#+**********************************************************************************+#
+write("Enter para continuar.")
+read(continuar)
+
+write("Variables: c1, c2, c3")
+
+write(c1)
 write(c2)
+write(c3)
+
+write("*** If-Else ***")
+write("Pregunto c1 es mayor a c2")
+
 if (c1 > c2)
 {
-    write("c1 es mas grande que c2")
+    write("Verdadero: c1 es mas grande que c2")
 }
 else
 {
-    write("c1 es mas chico o igual a c2")
+    write("Falso: c1 es mas chico o igual a c2")
 }
 
-c1 := 1
-c2 := 3
+write("")
+write("*** If-Else con AND ***")
+write("Pregunto c2 > c1 y c3 > c2")
+
+if (c2 > c1 AND c3 > c2)
+{
+    write("Verdadero: c2 > c1 y c3 > c2")
+}
+else
+{
+    write("Falso: c1 <= c2 o c3 <= c2")
+}
+
+write("")
+write("*** If-Else con OR ***")
+write("Pregunto c1 es mayor a c2 o si c3 mayor a c2")
+
+if (c1 > c2 OR c3 > c2)
+{
+    write("Verdadero: c1 > c2 o c3 > c2")
+}
+else
+{
+    write("Falso: c1 <= c2 y c3 <= c2")
+}
+
+write("")
+#+**********************************************************************************+#
+write("Enter para continuar.")
+read(continuar)
+
+write("*** Ciclo while ***")
+
+#+ c1 := 1 +#
+write("Ingrese un valor numerico menor a 10:")
+read(c1)
+
+c2 := 10
 
 while (c2 > c1)
 {
@@ -56,6 +150,42 @@ if (NOT c1 < c2)
     write("c1 y c2 son iguales")
 }
 
+write("")
+#+**********************************************************************************+#
+write("Enter para continuar.")
+read(continuar)
+
+write("*** Funcion sliceAndConcat ***")
+
+y := sliceAndConcat(3, 6, "amarillo", "verde", 0)
+
+write(y)
+
+write("")
+#+**********************************************************************************+#
+write("Enter para continuar.")
+read(continuar)
+
+write("*** Funcion sliceAndConcat ***")
+
+a1 := 4.1
+a2 := -1.5
+
+z := negativeCalculation(3.5, -2.0, a1, a2, -3.0)
+#+ z := negativeCalculation(3.5, -2.0, a1, a2, -3.0, -1.0, -2.0) +#
+
+write("Resultado funcion Caso 1:")
+write(z)
+
+a3 := -1.7
+
+z := negativeCalculation(-4.0, 2.3, a3, 5.6)
+#+ z := negativeCalculation(-4.0, -0.3, a3, -1.0) +#
+
+write("Resultado funcion Caso 2:")
+write(z)
+
+write("*** Fin de programa ***")
 
 #+ Esto es un comentario, se ignora y no da error de sintáxis. +#
 
